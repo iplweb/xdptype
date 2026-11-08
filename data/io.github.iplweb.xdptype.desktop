@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=xdptype
+Comment=Type text on Wayland via the RemoteDesktop portal
+Exec=xdptype
+Icon=input-keyboard
+Terminal=true
+NoDisplay=true
+Categories=Utility;

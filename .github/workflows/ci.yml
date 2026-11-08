@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: sudo apt-get update && sudo apt-get install -y libxkbcommon0
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+
+  deb:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential debhelper dh-python pybuild-plugin-pyproject \
+            python3-all python3-hatchling python3-jeepney python3-pytest \
+            libxkbcommon0 lintian
+      - name: Check versions agree
+        run: |
+          py=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' src/xdptype/__init__.py)
+          deb=$(dpkg-parsechangelog -S Version)
+          echo "python=$py debian=$deb"
+          test "$py" = "$deb"
+      - run: dpkg-buildpackage -us -uc -b
+      - run: lintian --fail-on error ../xdptype_*_all.deb
+      - name: Smoke test the package
+        run: |
+          sudo apt-get install -y ../xdptype_*_all.deb
+          xdptype --version
+      - run: mkdir dist && mv ../xdptype_*_all.deb dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: dist/*.deb

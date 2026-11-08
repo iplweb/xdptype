@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  check-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag matches version
+        run: |
+          py=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' src/xdptype/__init__.py)
+          test "v$py" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != v$py"; exit 1; }
+
+  pypi:
+    needs: [ci, check-tag]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - run: uv publish --trusted-publishing always
+
+  github-release:
+    needs: [ci, check-tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - uses: actions/download-artifact@v4
+        with:
+          name: deb
+          path: dist
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes
+
+  apt-repo:
+    needs: [ci, check-tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency: apt-repo
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - uses: actions/download-artifact@v4
+        with:
+          name: deb
+          path: incoming
+      - name: Import signing key
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        run: echo "$APT_GPG_PRIVATE_KEY" | gpg --batch --import
+      - name: Rebuild flat repository
+        run: |
+          sudo apt-get update && sudo apt-get install -y apt-utils
+          mkdir -p pool
+          mv incoming/*.deb pool/
+          apt-ftparchive packages pool > Packages
+          gzip -9kf Packages
+          apt-ftparchive \
+            -o APT::FTPArchive::Release::Origin=iplweb \
+            -o APT::FTPArchive::Release::Label=xdptype \
+            -o APT::FTPArchive::Release::Suite=stable \
+            -o APT::FTPArchive::Release::Codename=stable \
+            -o APT::FTPArchive::Release::Architectures=all \
+            release . > Release
+          gpg --batch --yes --clearsign -o InRelease Release
+          gpg --batch --yes -abs -o Release.gpg Release
+      - name: Publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add ${GITHUB_REF_NAME}"
+          git push

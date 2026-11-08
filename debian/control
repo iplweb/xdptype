@@ -1,0 +1,35 @@
+Source: xdptype
+Section: utils
+Priority: optional
+Maintainer: Michał Pasternak <michal.dtz@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               pybuild-plugin-pyproject,
+               python3-all,
+               python3-hatchling,
+               python3-jeepney,
+               python3-pytest,
+               libxkbcommon0,
+Standards-Version: 4.6.2
+Homepage: https://github.com/iplweb/xdptype
+Vcs-Browser: https://github.com/iplweb/xdptype
+Vcs-Git: https://github.com/iplweb/xdptype.git
+Rules-Requires-Root: no
+X-Python3-Version: >= 3.10
+
+Package: xdptype
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         libxkbcommon0,
+         python3-jeepney,
+Recommends: xdg-desktop-portal
+Description: type text on Wayland through the RemoteDesktop portal
+ xdptype is a wtype replacement for Wayland compositors that do not
+ implement the virtual-keyboard protocol, such as GNOME (mutter). It sends
+ keysyms through the xdg-desktop-portal RemoteDesktop portal, so it needs
+ no access to /dev/uinput. The permission dialog is shown once; the grant
+ is remembered with a restore token.
+ .
+ Non-ASCII text (Polish, German, the euro sign, ...) is typed as-is,
+ without guessing the keyboard layout.

@@ -1,0 +1,41 @@
+[project]
+name = "xdptype"
+dynamic = ["version"]
+description = "wtype for desktops without virtual-keyboard: type text on Wayland via the xdg-desktop-portal RemoteDesktop portal (GNOME, KDE)"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Michał Pasternak", email = "michal.dtz@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = ["jeepney>=0.8"]
+keywords = ["wayland", "xdg-desktop-portal", "remote-desktop", "wtype", "ydotool", "gnome", "typing"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Desktop Environment",
+]
+
+[project.urls]
+Homepage = "https://github.com/iplweb/xdptype"
+Issues = "https://github.com/iplweb/xdptype/issues"
+
+[project.scripts]
+xdptype = "xdptype.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/xdptype/__init__.py"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
