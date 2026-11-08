@@ -4,7 +4,6 @@ dynamic = ["version"]
 description = "wtype for desktops without virtual-keyboard: type text on Wayland via the xdg-desktop-portal RemoteDesktop portal (GNOME, KDE)"
 readme = "README.md"
 license = "MIT"
-license-files = ["LICENSE"]
 authors = [{ name = "Michał Pasternak", email = "michal.dtz@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = ["jeepney>=0.8"]

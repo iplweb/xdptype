@@ -78,9 +78,7 @@ class KeyboardSession:
             REMOTE_DESKTOP,
             "CreateSession",
             "a{sv}",
-            lambda opts: (
-                {**opts, "session_handle_token": ("s", _token())},
-            ),
+            lambda opts: ({**opts, "session_handle_token": ("s", _token())},),
         )
         self._session = results["session_handle"][1]
 
@@ -118,7 +116,9 @@ class KeyboardSession:
                     bus_name=BUS_NAME,
                     interface="org.freedesktop.portal.Session",
                 )
-                unwrap_msg(self._conn.send_and_get_reply(new_method_call(session, "Close")))
+                unwrap_msg(
+                    self._conn.send_and_get_reply(new_method_call(session, "Close"))
+                )
         finally:
             self._conn.close()
             self._conn = None
@@ -160,7 +160,9 @@ class KeyboardSession:
         try:
             unwrap_msg(reply)
         except DBusErrorResponse as e:
-            print(f"xdptype: could not register app id {app_id!r}: {e}", file=sys.stderr)
+            print(
+                f"xdptype: could not register app id {app_id!r}: {e}", file=sys.stderr
+            )
 
     def _request(self, address: DBusAddress, method: str, signature: str, build_args):
         """Call a portal method that answers through a Request object.
